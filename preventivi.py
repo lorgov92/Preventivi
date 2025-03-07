@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request, Form, Response
+from fastapi import FastAPI, HTTPException, Request, Form, Responsehttps://github.com/lorgov92/Preventivi/blob/main/preventivi.py
 from pydantic import BaseModel
 import datetime
 import os
@@ -53,19 +53,18 @@ from fastapi import FastAPI, HTTPException, Request, Form, Response  # Aggiungi 
 @app.post("/whatsapp/")
 async def whatsapp_webhook(request: Request):
     form_data = await request.form()
+    print(f"Form Data: {form_data}")  # Aggiungi questa riga per il debug
     sender = form_data.get("From")
     message_body = form_data.get("Body").strip().lower()
-
+    
     risposta = "Ciao! 😊 Sono il tuo assistente per i preventivi. Dimmi, di che lavoro hai bisogno? ✨"
     
     if "preventivo" in message_body:
         risposta = "Ottima scelta! 💪 Per darti un preventivo preciso, ho bisogno di alcune info:\n1️⃣ Quante ore di lavoro pensi siano necessarie?\n2️⃣ Qual è il costo stimato dei materiali?\n3️⃣ Il lavoro è semplice, medio o complesso?"
-
-    # Protezione anti-spam (es. limiti di richieste dallo stesso numero)
+    
     if sender is None or not sender.startswith("whatsapp:"):
         raise HTTPException(status_code=400, detail="Richiesta non valida")
     
-    # Risposta XML correttamente indentata
     return Response(
         content=f"<?xml version='1.0' encoding='UTF-8'?><Response><Message>{risposta}</Message></Response>",
         media_type="application/xml"
