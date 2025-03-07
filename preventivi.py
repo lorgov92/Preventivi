@@ -63,10 +63,9 @@ async def whatsapp_webhook(request: Request):
     if sender is None or not sender.startswith("whatsapp:"):
         raise HTTPException(status_code=400, detail="Richiesta non valida")
     
-    client.messages.create(
-        from_=TWILIO_WHATSAPP_NUMBER,
-        body=risposta,
-        to=sender
-    )
+return Response(
+    content=f"<?xml version='1.0' encoding='UTF-8'?><Response><Message>{risposta}</Message></Response>",
+    media_type="application/xml"
+)
     
     return {"status": "Messaggio inviato", "hash": hash_protect(risposta)}
