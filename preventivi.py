@@ -27,6 +27,39 @@ def hash_protect(data: str) -> str:
     """Genera un hash SHA-256 codificato in base64 per protezione"""
     return base64.b64encode(hashlib.sha256(data.encode()).digest()).decode()
 
+# Simuliamo un database locale per i prezzi medi
+COSTO_ORARIO_BASE = 30  # Euro/ora (valore medio, può essere aggiornato con i dati raccolti)
+MARGINE_PROFITTO = 1.2  # Margine di profitto standard (20%)
+
+# Funzione di hashing per proteggere il codice da copia
+def hash_protect(data):
+    return base64.b64encode(hashlib.sha256(data.encode()).digest()).decode()
+
+# Modello dati per la richiesta di preventivo
+class PreventivoRequest(BaseModel):
+    ore_lavoro: float
+    materiali_costo: float
+    complessita: int  # 1 = facile, 2 = medio, 3 = complesso
+
+# Funzione per calcolare il preventivo
+def calcola_preventivo(ore_lavoro: float, materiali_costo: float, complessita: int):
+    costo_base = ore_lavoro * COSTO_ORARIO_BASE
+    
+    # Aggiustamento in base alla complessità
+    fattore_complessita = {1: 1.0, 2: 1.2, 3: 1.5}
+    costo_totale = (costo_base + materiali_costo) * fattore_complessita.get(complessita, 1.0)
+    costo_totale *= MARGINE_PROFITTO
+    
+    return round(costo_totale, 2)
+
+@app.post("/calcola_preventivo/")
+def calcola(preventivo: PreventivoRequest):
+    try:
+        prezzo_finale = calcola_preventivo(preventivo.ore_lavoro, preventivo.materiali_costo, preventivo.complessita)
+        return {"prezzo_preventivato": prezzo_finale, "data": datetime.date.today().isoformat()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/whatsapp/")
 async def whatsapp_webhook(request: Request):
     try:
