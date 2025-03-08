@@ -68,6 +68,7 @@ async def whatsapp_webhook(request: Request):
         logging.info(f"Data ricevuta: {form_data}")
 
         sender = form_data.get("From")
+        logging.info(f"Messaggio ricevuto da: {sender}")
         message_body = form_data.get("Body", "").strip().lower()
 
  
