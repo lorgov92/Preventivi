@@ -69,6 +69,11 @@ async def whatsapp_webhook(request: Request):
 
         sender = form_data.get("From")
         message_body = form_data.get("Body", "").strip().lower()
+
+ 
+        if not sender.startswith("whatsapp:"):
+            logging.error(f"Numero mittente non valido: {sender}")
+            raise HTTPException(status_code=400, detail="Il numero deve essere un contatto WhatsApp valido")
         
         if not sender:
             logging.error("Parametro 'From' mancante nella richiesta")
