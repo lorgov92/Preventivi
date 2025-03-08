@@ -90,10 +90,10 @@ async def whatsapp_webhook(request: Request):
             )
 
         # Invio del messaggio tramite Twilio
-        client.messages.create(
-            from_=TWILIO_WHATSAPP_NUMBER,
-            body=risposta,
-            to=sender
+            client.messages.create(
+            from_=f"whatsapp:{TWILIO_WHATSAPP_NUMBER}",  
+            body=risposta,  
+            to=sender  
         )
 
         return {"status": "Messaggio inviato", "hash": hash_protect(risposta)}
