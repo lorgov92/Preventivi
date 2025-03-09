@@ -6,6 +6,7 @@ import base64
 import hashlib
 import logging
 import datetime
+import openai  # OpenAI per GPT-4
 
 app = FastAPI()
 
@@ -17,9 +18,15 @@ TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_WHATSAPP_NUMBER = os.getenv("TWILIO_WHATSAPP_NUMBER")  # Numero Twilio
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # API Key per OpenAI GPT-4
+
 if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN or not TWILIO_WHATSAPP_NUMBER:
     logging.error("Errore: Variabili d'ambiente di Twilio mancanti!")
     raise ValueError("Configurazione Twilio non valida")
+
+if not OPENAI_API_KEY:
+    logging.error("Errore: API Key di OpenAI mancante!")
+    raise ValueError("API Key OpenAI non trovata")
 
 # Inizializza il client Twilio
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
@@ -53,13 +60,37 @@ def calcola_preventivo(ore_lavoro: float, materiali_costo: float, complessita: i
     
     return round(costo_totale, 2)
 
-@app.post("/calcola_preventivo/")
-def calcola(preventivo: PreventivoRequest):
+# Funzione per chiamare GPT-4 e generare una risposta
+def genera_risposta_ai(messaggio_utente):
+    prompt = f"""
+    Sei un chatbot esperto nel calcolo dei preventivi per artigiani. 
+    Rispondi in modo professionale e chiaro. Se l'utente chiede un preventivo, guida la conversazione chiedendo:
+    1️⃣ Quante ore di lavoro sono necessarie?
+    2️⃣ Qual è il costo stimato dei materiali?
+    3️⃣ Il lavoro è semplice, medio o complesso?
+
+    Ecco il messaggio dell'utente: {messaggio_utente}
+    """
+
     try:
-        prezzo_finale = calcola_preventivo(preventivo.ore_lavoro, preventivo.materiali_costo, preventivo.complessita)
-        return {"prezzo_preventivato": prezzo_finale, "data": datetime.date.today().isoformat()}
+        response = openai.ChatCompletion.create(
+            model="gpt-4-turbo",
+            messages=[{"role": "system", "content": prompt}],
+            max_tokens=200,
+            api_key=OPENAI_API_KEY,
+        )
+        return response["choices"][0]["message"]["content"]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logging.error(f"Errore chiamata API OpenAI: {e}")
+        return "⚠️ Si è verificato un errore nel generare la risposta. Riprova più tardi!"
+
+# @app.post("/calcola_preventivo/")
+# def calcola(preventivo: PreventivoRequest):
+#    try:
+#        prezzo_finale = calcola_preventivo(preventivo.ore_lavoro, preventivo.materiali_costo, preventivo.complessita)
+#        return {"prezzo_preventivato": prezzo_finale, "data": datetime.date.today().isoformat()}
+#    except Exception as e:
+#        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/whatsapp/")
 async def whatsapp_webhook(request: Request):
