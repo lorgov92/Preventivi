@@ -92,7 +92,8 @@ async def whatsapp_webhook(request: Request):
 
         # Invio del messaggio tramite Twilio
             client.messages.create(
-            from_=f"whatsapp:{TWILIO_WHATSAPP_NUMBER}",  
+          #  from_=f"whatsapp:{TWILIO_WHATSAPP_NUMBER}",  
+            from_="whatsapp:+14155238886",  # Numero ufficiale di Twilio Sandbox
             body=risposta,  
             to=sender  
         )
